@@ -1,6 +1,8 @@
 """Generate command for creating Python code from natural language."""
 
+import re
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import click
@@ -45,7 +47,7 @@ Output ONLY the Python code without any markdown formatting or explanations."""
     "--output",
     "-o",
     type=click.Path(),
-    help="Output file path (default: print to stdout).",
+    help="Output file path. Overrides workspace auto-save location.",
 )
 @click.option(
     "--temperature",
@@ -65,6 +67,7 @@ def generate_command(
     """Generate Python code from natural language description.
 
     PROMPT is a natural language description of the code you want to generate.
+    Output is always shown in the terminal and auto-saved to ~/pyforge-workspace/generated/.
 
     Examples:
         pyforge generate "Create a function to sort a list of dictionaries by a key"
@@ -73,8 +76,10 @@ def generate_command(
         pyforge generate "Create a decorator that logs function execution time" -c utils.py
     """
     from pyforge.cli import get_client as get_cli_client
+    from pyforge.config import get_workspace_dir
 
     client: LLMProvider = get_cli_client(ctx)
+    cfg = ctx.obj["config"]
 
     full_prompt = _build_prompt(prompt, context)
 
@@ -91,17 +96,34 @@ def generate_command(
 
         code = _extract_code(response)
 
+        # Always display in terminal
+        syntax = Syntax(code, "python", theme="monokai", line_numbers=True)
+        console.print(Panel(syntax, title="Generated Code", border_style="green"))
+
+        # Save to explicit output path if given
         if output:
-            output_path = Path(output)
-            output_path.write_text(code, encoding="utf-8")
-            console.print(f"[bold green]Code saved to:[/bold green] {output_path.absolute()}")
-        else:
-            syntax = Syntax(code, "python", theme="monokai", line_numbers=True)
-            console.print(Panel(syntax, title="Generated Code", border_style="green"))
+            out = Path(output)
+            out.write_text(code, encoding="utf-8")
+            console.print(f"[bold green]Saved to:[/bold green] {out.absolute()}")
+
+        # Auto-save to workspace
+        elif cfg.get("workspace", {}).get("auto_save", True):
+            workspace = get_workspace_dir(cfg)
+            filename = _prompt_to_filename(prompt)
+            save_path = workspace / "generated" / filename
+            save_path.write_text(code, encoding="utf-8")
+            console.print(f"[dim]Auto-saved to: {save_path}[/dim]")
 
     except LLMProviderError as e:
         console.print(f"[bold red]Error:[/bold red] {e}")
         sys.exit(1)
+
+
+def _prompt_to_filename(prompt: str) -> str:
+    """Turn a prompt string into a safe, readable filename."""
+    slug = re.sub(r"[^a-z0-9]+", "_", prompt.lower())[:40].strip("_")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return f"{timestamp}_{slug}.py"
 
 
 def _build_prompt(user_prompt: str, context_files: tuple[str, ...]) -> str:

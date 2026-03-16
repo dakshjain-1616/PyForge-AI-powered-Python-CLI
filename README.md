@@ -31,8 +31,12 @@ Supports two LLM backends:
 ```bash
 git clone https://github.com/pyforge/pyforge
 cd pyforge
+python3 -m venv venv
+source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -e .
 ```
+
+> **Note:** You must run `source venv/bin/activate` in every new terminal before using `pyforge`. Alternatively, install with `pipx install .` (requires `pipx`) to make `pyforge` available system-wide without activating a venv each time.
 
 Then set up a provider (see [Providers](#providers) below).
 
@@ -369,6 +373,10 @@ openrouter:
   api_key: ""                    # or set OPENROUTER_API_KEY env var
   base_url: https://openrouter.ai/api/v1
 
+workspace:
+  dir: ~/pyforge-workspace      # all outputs auto-saved here
+  auto_save: true               # set false to disable auto-saving
+
 generation:
   max_tokens: 4096              # max output length
 
@@ -407,6 +415,8 @@ pyforge --config /path/to/my-config.yaml debug script.py
 ### Setup
 
 ```bash
+python3 -m venv venv
+source venv/bin/activate
 pip install -e ".[dev]"
 ```
 

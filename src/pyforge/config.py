@@ -25,6 +25,10 @@ DEFAULT_CONFIG = {
         "color_scheme": "default",
         "show_line_numbers": True,
     },
+    "workspace": {
+        "dir": "~/pyforge-workspace",  # where all outputs are auto-saved
+        "auto_save": True,
+    },
     "generation": {
         "include_type_hints": True,
         "include_docstrings": True,
@@ -43,6 +47,17 @@ DEFAULT_CONFIG = {
         "check_style": True,
     },
 }
+
+
+def get_workspace_dir(config: dict | None = None) -> Path:
+    """Get the workspace directory, creating it if needed."""
+    if config is None:
+        config = load_config()
+    raw = config.get("workspace", {}).get("dir", "~/pyforge-workspace")
+    workspace = Path(raw).expanduser()
+    for subdir in ("generated", "reviews", "debug"):
+        (workspace / subdir).mkdir(parents=True, exist_ok=True)
+    return workspace
 
 
 def get_config_dir() -> Path:

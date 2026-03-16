@@ -71,8 +71,11 @@ def review_command(
         pyforge review myscript.py -o review_report.md
     """
     from pyforge.cli import get_client as get_cli_client
+    from pyforge.config import get_workspace_dir
+    from datetime import datetime
 
     client: LLMProvider = get_cli_client(ctx)
+    cfg = ctx.obj["config"]
 
     file_path = Path(file)
     try:
@@ -91,17 +94,29 @@ def review_command(
                 stream=False,
             )
 
+        # Always display in terminal
+        console.print(Panel(
+            Markdown(response),
+            title=f"Code Review: {file_path.name}",
+            border_style="blue",
+            padding=(1, 2),
+        ))
+
+        # Save to explicit output path if given
         if output:
             output_path = Path(output)
             output_path.write_text(response, encoding="utf-8")
             console.print(f"[bold green]Review saved to:[/bold green] {output_path.absolute()}")
-        else:
-            console.print(Panel(
-                Markdown(response),
-                title=f"Code Review: {file_path.name}",
-                border_style="blue",
-                padding=(1, 2),
-            ))
+
+        # Auto-save to workspace
+        elif cfg.get("workspace", {}).get("auto_save", True):
+            workspace = get_workspace_dir(cfg)
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            stem = file_path.stem
+            focus_tag = f"_{focus}" if focus != "all" else ""
+            save_path = workspace / "reviews" / f"{timestamp}_{stem}{focus_tag}_review.md"
+            save_path.write_text(response, encoding="utf-8")
+            console.print(f"[dim]Auto-saved to: {save_path}[/dim]")
 
     except LLMProviderError as e:
         console.print(f"[bold red]Error:[/bold red] {e}")
