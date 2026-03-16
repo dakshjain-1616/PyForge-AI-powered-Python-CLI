@@ -2,6 +2,8 @@
 
 AI-powered Python CLI tool for code generation, debugging, review, and chat.
 
+> This project was built autonomously by **[NEO - Your Fully Autonomous AI Agent](https://heyneo.so)**
+
 Supports two LLM backends:
 - **Ollama** (local, free) — runs models on your machine, no data leaves your system
 - **OpenRouter** (cloud) — access frontier models via API key
@@ -482,3 +484,4 @@ Use a terminal that supports Unicode and ANSI colors (most modern terminals do).
 ## License
 
 MIT License
+> This project was built autonomously by **[NEO - Your Fully Autonomous AI Agent](https://heyneo.so)**
