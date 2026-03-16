@@ -31,7 +31,7 @@ Supports two LLM backends:
 ## Installation
 
 ```bash
-git clone https://github.com/pyforge/pyforge
+Clone the repo 
 cd pyforge
 python3 -m venv venv
 source venv/bin/activate   # Windows: venv\Scripts\activate
